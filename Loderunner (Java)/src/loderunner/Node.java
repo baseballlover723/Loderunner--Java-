@@ -13,7 +13,7 @@ public class Node {
 	protected NodeData down;
 	protected NodeData up;
 	protected NodeData right;
-//	protected ArrayList<NodeData> zonesCanGo;
+	// protected ArrayList<NodeData> zonesCanGo;
 	private BlockType block;
 	private Zone zone;
 	protected boolean canGoDown;
@@ -38,23 +38,23 @@ public class Node {
 			this.up = checkUp();
 		}
 
-//		this.zonesCanGo = new ArrayList<NodeData>();
-//		isValid(this.up);
-//		isValid(this.down);
-//		isValid(this.left);
-//		isValid(this.right);
+		// this.zonesCanGo = new ArrayList<NodeData>();
+		// isValid(this.up);
+		// isValid(this.down);
+		// isValid(this.left);
+		// isValid(this.right);
 	}
 
-//	private void isValid(NodeData nodeData) {
-//		if (nodeData != null) {
-//			// if (newZone.id != this.zone.id) {
-//			System.out.println(this.x + " " + this.y + " " + nodeData.direction);
-//			this.zonesCanGo.add(nodeData);
-//			GameData.setBlock(this.x, this.y, BlockType.Gold);
-//			// }
-//		}
+	// private void isValid(NodeData nodeData) {
+	// if (nodeData != null) {
+	// // if (newZone.id != this.zone.id) {
+	// System.out.println(this.x + " " + this.y + " " + nodeData.direction);
+	// this.zonesCanGo.add(nodeData);
+	// GameData.setBlock(this.x, this.y, BlockType.Gold);
+	// // }
+	// }
 
-//	}
+	// }
 	@Override
 	public String toString() {
 		String string = "x: " + this.x + " y: " + this.y + " ";
@@ -83,8 +83,7 @@ public class Node {
 
 	private NodeData checkLeft() {
 		Zone zoneToReturn;
-		if (!GameData.isXBlocked(GameData.getBlock(this.x - 1, this.y))
-				&& (!this.zone.isInZone(this.x - 1, this.y))) {
+		if (!GameData.isXBlocked(GameData.getBlock(this.x - 1, this.y)) && (!this.zone.isInZone(this.x - 1, this.y))) {
 			zoneToReturn = GameData.inWhatZone(this.x - 1, this.y, this.zone.id);
 			if (zoneToReturn != null) {
 				return new NodeData(zoneToReturn, Direction.left, 0);
@@ -105,8 +104,7 @@ public class Node {
 
 	private NodeData checkRight() {
 		Zone zoneToReturn;
-		if (!GameData.isXBlocked(GameData.getBlock(this.x + 1, this.y))
-				&& (!this.zone.isInZone(this.x + 1, this.y))) {
+		if (!GameData.isXBlocked(GameData.getBlock(this.x + 1, this.y)) && (!this.zone.isInZone(this.x + 1, this.y))) {
 			zoneToReturn = GameData.inWhatZone(this.x + 1, this.y, this.zone.id);
 			if (zoneToReturn != null) {
 				return new NodeData(zoneToReturn, Direction.right, 0);
@@ -138,10 +136,37 @@ public class Node {
 		}
 		return new NodeData(newZone, Direction.down, counter);
 	}
+
 	protected double getY() {
 		return this.y + 0.5;
 	}
+
 	protected double getX() {
 		return this.x + 0.5;
+	}
+
+	public boolean isInside(SuperCharacter character, boolean isZoneTall) {
+		if (!isZoneTall) {
+			// not on ladder
+			// must have both left and right inside
+			if ((int) character.xL == this.x && (int) character.xR == this.x) {
+				// needs to have either of top or bottom be in node
+				if ((int) character.yF == this.y || (int) character.yU == this.y) {
+					System.out.println("inside node");
+					return true;
+				}
+			}
+		} else {
+			// on ladder
+			// must have both head and feet inside
+			if ((int) character.yF == this.y && (int) character.yU == this.y) {
+				// needs to have either of left or right be in node
+				if ((int) character.xL == this.x || (int) character.xR == this.x) {
+					System.out.println("inside node");
+					return true;
+				}
+			}
+		}
+		return false;
 	}
 }

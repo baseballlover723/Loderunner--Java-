@@ -177,12 +177,12 @@ public class LodeWorld extends JComponent {
 		for (Guard guard : GameData.getGuardList()) {
 			guard.drawGuard(g2);
 		}
-//		for (int k = 0; k<32;k++) {
-//			g2.fillRect((int) (k * cellPixelWidth), 0, 1, this.getHeight());
-//		}
-//		for (int k = 0; k<22;k++) {
-//			g2.fillRect(0,(int) (k * cellPixelHeight), this.getWidth(), 1);
-//		}
+		for (int k = 0; k<32;k++) {
+			g2.fillRect((int) (k * cellPixelWidth), 0, 1, this.getHeight());
+		}
+		for (int k = 0; k<22;k++) {
+			g2.fillRect(0,(int) (k * cellPixelHeight), this.getWidth(), 1);
+		}
 
 
 	}

@@ -33,6 +33,7 @@ public class Guard extends SuperCharacter {
 	private boolean isFalling;
 	private Sound music;
 	protected AI AI;
+	protected Zone currentZone;
 
 	public Guard(int xAnchor, int yAnchor) {
 		this.anchorPoint = new Point2D.Double(xAnchor - 0.5, yAnchor - 0.5);
@@ -61,16 +62,30 @@ public class Guard extends SuperCharacter {
 
 		this.hasGold = false;
 		this.music = new Sound();
+		this.currentZone = GameData.inWhatZone((int)this.anchorPoint.x, (int) this.anchorPoint.y);
 		// super.update();
 
 	}
 
-	public static void setLastMove(Direction go) {
+	public void setLastMove(Direction go) {
 		direction = go;
 	}
 	public static Direction getLastMove() {
 		return direction;
 	}
+	
+	@Override
+	protected void updateZone() {
+		Zone uL = GameData.inWhatZone((int)super.xL, (int)super.yU);
+		Zone uR = GameData.inWhatZone((int)super.xR, (int)super.yU);
+		Zone fL = GameData.inWhatZone((int)super.xL, (int)super.yF);
+		Zone fR = GameData.inWhatZone((int)super.xR, (int)super.yF);
+		if (!(uL != uR || uR != fL || fL != fR)) {
+			// all zones are the same, so update zones
+			this.currentZone = uL;
+		}
+	}
+	
 	public void drawGuard(Graphics2D g2d) {
 		double cellPixelWidth = LodeWorld.getPixelWidth();
 		double cellPixelHeight = LodeWorld.getPixelHeight();

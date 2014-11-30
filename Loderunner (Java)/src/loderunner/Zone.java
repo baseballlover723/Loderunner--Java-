@@ -36,16 +36,18 @@ public class Zone {
 			this.y2--;
 		}
 		this.nodes = new ArrayList<Node>();
-//		if (this.x1 != 0) {
-//			this.nodes.add(new Node(this.x1 - 1, this.y1))
-//		}
+		// if (this.x1 != 0) {
+		// this.nodes.add(new Node(this.x1 - 1, this.y1))
+		// }
 	}
+
 	protected void addNode(Node node) {
 		this.nodes.add(node);
 	}
+
 	protected boolean isInZone(int x, int y) {
 		if (this.tall) {
-			if(x == this.x1 && y <= this.y2 && y >= this.y1 -1) {
+			if (x == this.x1 && y <= this.y2 && y >= this.y1 - 1) {
 				return true;
 			} else {
 				return false;
@@ -57,5 +59,10 @@ public class Zone {
 				return false;
 			}
 		}
+	}
+
+	@Override
+	public String toString() {
+		return this.id + "";
 	}
 }

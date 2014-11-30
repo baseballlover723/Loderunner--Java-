@@ -9,7 +9,7 @@ import loderunner.GameData.BlockType;
 abstract public class SuperCharacter {
 	protected double XMOVE_CONSTANT;
 	protected double YMOVE_CONSTANT;
-	protected Double anchorPoint;
+	protected Point2D.Double anchorPoint;
 	protected double xProportion;
 	protected double yProportion;
 
@@ -38,7 +38,7 @@ abstract public class SuperCharacter {
 	/**
 	 * updates the character bounding box and the blocks at those points
 	 */
-	protected void update() {
+	protected boolean update() {
 		// if the character is in the center of a block, each bounding block
 		// will be the same as the block at the anchor point
 		// bounding box coordinates
@@ -48,6 +48,7 @@ abstract public class SuperCharacter {
 		this.yU = (this.anchorPoint.getY() - this.yProportion / 2);
 		// just above feet
 		this.yF = (this.anchorPoint.getY() + this.yProportion / 2);
+		// just below feet
 		this.yD = (this.anchorPoint.getY() + this.yProportion / 2 + 0.015);
 		this.upperLeftBlock = GameData.getBlock(this.xL, this.yU);
 		this.upperRightBlock = GameData.getBlock(this.xR, this.yU);
@@ -57,6 +58,7 @@ abstract public class SuperCharacter {
 		this.lowerRightBlock = GameData.getBlock(this.xR, this.yD);
 		this.boundingRectangle.setRect(this.xL, this.yU, this.xProportion, this.yProportion);
 
+		this.updateZone();
 		if (this.upperLeftBlock == GameData.BlockType.Gold) {
 			this.handleGold(1);
 		} else if (this.lowerLeftFootBlock == GameData.BlockType.Gold) {
@@ -68,9 +70,12 @@ abstract public class SuperCharacter {
 		} else if (checkDead()) {
 			this.handleDeath();
 			System.out.println("I'm dead!!!!");
+			return true;
 		}
-
+		return false;
 	}
+
+	abstract protected void updateZone();
 
 	/**
 	 * handles what happens when the character dies.
@@ -86,8 +91,7 @@ abstract public class SuperCharacter {
 	 */
 	private boolean checkDead() {
 		if (this.isDeathBlock(this.upperLeftBlock) || this.isDeathBlock(this.lowerLeftFootBlock)
-				|| this.isDeathBlock(this.upperRightBlock)
-				|| this.isDeathBlock(this.lowerRightFootBlock)) {
+				|| this.isDeathBlock(this.upperRightBlock) || this.isDeathBlock(this.lowerRightFootBlock)) {
 			return true;
 		} else {
 			if (isPlayer) {
@@ -105,8 +109,12 @@ abstract public class SuperCharacter {
 	private boolean isDeathBlock(BlockType block) {
 		if (block == GameData.BlockType.nothing || block == GameData.BlockType.Ladder
 				|| block == GameData.BlockType.Rope || block == GameData.BlockType.Temp
-				|| block == GameData.BlockType.Gold || block == GameData.BlockType.GuardInTemp || block == GameData.BlockType.FinalLadder || block == GameData.BlockType.nextLevelPortal ) { // if is nothing or
-		return false;
+				|| block == GameData.BlockType.Gold || block == GameData.BlockType.GuardInTemp
+				|| block == GameData.BlockType.FinalLadder || block == GameData.BlockType.nextLevelPortal) { // if
+																												// is
+																												// nothing
+																												// or
+			return false;
 		} else {
 			return true;
 		}
@@ -148,11 +156,11 @@ abstract public class SuperCharacter {
 	public Point2D getAnchorPoint() {
 		return this.anchorPoint;
 	}
+
 	public void setAnchorPoint(double x, double y) {
-		this.anchorPoint.x= x;
-		this.anchorPoint.y=y;
+		this.anchorPoint.x = x;
+		this.anchorPoint.y = y;
 	}
-	
 
 	// public boolean isInWorld() {
 	// if (this.getAnchorPoint().getX() > LodeWorld.getPixelWidth()
@@ -214,40 +222,38 @@ abstract public class SuperCharacter {
 	public boolean blocked(GameData.Direction direction) {
 		if (direction.isHorizontal()) {
 			return GameData.isXBlocked(GameData.getBlock(
-					(this.anchorPoint.getX() + (XMOVE_CONSTANT + this.xProportion / 2)
-							* direction.getValue()),
+					(this.anchorPoint.getX() + (XMOVE_CONSTANT + this.xProportion / 2) * direction.getValue()),
 					(this.anchorPoint.getY() - this.yProportion / 2)))
 					|| GameData.isXBlocked(GameData.getBlock(
-							(this.anchorPoint.getX() + (XMOVE_CONSTANT + this.xProportion / 2)
-									* direction.getValue()),
+							(this.anchorPoint.getX() + (XMOVE_CONSTANT + this.xProportion / 2) * direction.getValue()),
 							(this.anchorPoint.getY() + this.yProportion / 2)));
 		} else {
 			if (direction == GameData.Direction.up) {
-				return GameData.isYBlocked(GameData.getBlock(
-						(this.anchorPoint.getX() + this.xProportion / 2),
-						(this.anchorPoint.getY() + (YMOVE_CONSTANT + this.yProportion / 2)
-								* direction.getValue())), direction)
-						|| GameData.isYBlocked(GameData.getBlock(
-								(this.anchorPoint.getX() - this.xProportion / 2),
-								(this.anchorPoint.getY() + (YMOVE_CONSTANT + this.yProportion / 2)
-										* direction.getValue())), direction)
-						|| GameData.isYBlocked(GameData.getBlock(
-								(this.anchorPoint.getX() + this.xProportion / 2),
-								(this.anchorPoint.getY() - (this.yProportion / 2)
-										* direction.getValue())), direction)
-						|| GameData.isYBlocked(GameData.getBlock(
-								(this.anchorPoint.getX() - this.xProportion / 2),
-								(this.anchorPoint.getY() - (this.yProportion / 2)
-										* direction.getValue())), direction);
+				return GameData.isYBlocked(GameData.getBlock((this.anchorPoint.getX() + this.xProportion / 2),
+						(this.anchorPoint.getY() + (YMOVE_CONSTANT + this.yProportion / 2) * direction.getValue())),
+						direction)
+						|| GameData.isYBlocked(
+								GameData.getBlock(
+										(this.anchorPoint.getX() - this.xProportion / 2),
+										(this.anchorPoint.getY() + (YMOVE_CONSTANT + this.yProportion / 2)
+												* direction.getValue())), direction)
+						|| GameData.isYBlocked(
+								GameData.getBlock((this.anchorPoint.getX() + this.xProportion / 2),
+										(this.anchorPoint.getY() - (this.yProportion / 2) * direction.getValue())),
+								direction)
+						|| GameData.isYBlocked(
+								GameData.getBlock((this.anchorPoint.getX() - this.xProportion / 2),
+										(this.anchorPoint.getY() - (this.yProportion / 2) * direction.getValue())),
+								direction);
 			}
-			return GameData.isYBlocked(GameData.getBlock(
-					(this.anchorPoint.getX() + this.xProportion / 2),
-					(this.anchorPoint.getY() + (YMOVE_CONSTANT + this.yProportion / 2)
-							* direction.getValue())), direction)
-					|| GameData.isYBlocked(GameData.getBlock(
-							(this.anchorPoint.getX() - this.xProportion / 2),
-							(this.anchorPoint.getY() + (YMOVE_CONSTANT + this.yProportion / 2)
-									* direction.getValue())), direction);
+			return GameData.isYBlocked(GameData.getBlock((this.anchorPoint.getX() + this.xProportion / 2),
+					(this.anchorPoint.getY() + (YMOVE_CONSTANT + this.yProportion / 2) * direction.getValue())),
+					direction)
+					|| GameData.isYBlocked(
+							GameData.getBlock(
+									(this.anchorPoint.getX() - this.xProportion / 2),
+									(this.anchorPoint.getY() + (YMOVE_CONSTANT + this.yProportion / 2)
+											* direction.getValue())), direction);
 		}
 	}
 
@@ -261,14 +267,12 @@ abstract public class SuperCharacter {
 		if (this.onRope()) {
 			return false;
 		}
-		if ((this.upperLeftBlock == GameData.BlockType.nothing
-				|| this.upperLeftBlock == GameData.BlockType.Temp
+		if ((this.upperLeftBlock == GameData.BlockType.nothing || this.upperLeftBlock == GameData.BlockType.Temp
 				|| this.upperLeftBlock == GameData.BlockType.Gold || this.upperLeftBlock == GameData.BlockType.Rope)
 				&& (this.upperRightBlock == GameData.BlockType.nothing
 						|| this.upperRightBlock == GameData.BlockType.Temp
 						|| this.upperRightBlock == GameData.BlockType.Gold || this.upperRightBlock == GameData.BlockType.Rope)
-				&& (this.lowerLeftBlock == GameData.BlockType.nothing
-						|| this.lowerLeftBlock == GameData.BlockType.Temp
+				&& (this.lowerLeftBlock == GameData.BlockType.nothing || this.lowerLeftBlock == GameData.BlockType.Temp
 						|| this.lowerLeftBlock == GameData.BlockType.Gold || this.lowerLeftBlock == GameData.BlockType.Rope)
 				&& (this.lowerRightBlock == GameData.BlockType.nothing
 						|| this.lowerRightBlock == GameData.BlockType.Temp
@@ -286,8 +290,7 @@ abstract public class SuperCharacter {
 	 * @return
 	 */
 	protected boolean onLadder() {
-		if (this.upperLeftBlock == GameData.BlockType.Ladder
-				|| this.upperRightBlock == GameData.BlockType.Ladder
+		if (this.upperLeftBlock == GameData.BlockType.Ladder || this.upperRightBlock == GameData.BlockType.Ladder
 				|| this.lowerLeftFootBlock == GameData.BlockType.Ladder
 				|| this.lowerRightFootBlock == GameData.BlockType.Ladder) {
 			return true;
@@ -295,6 +298,7 @@ abstract public class SuperCharacter {
 			return false;
 		}
 	}
+
 	protected boolean onFinalLadder() {
 		if (this.upperLeftBlock == GameData.BlockType.nextLevelPortal
 				|| this.upperRightBlock == GameData.BlockType.nextLevelPortal

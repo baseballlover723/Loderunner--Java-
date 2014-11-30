@@ -9,6 +9,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 
+import javax.management.RuntimeErrorException;
+
 //Stores data for current game
 public class GameData {
 	private static int score = 0;
@@ -25,8 +27,8 @@ public class GameData {
 	private static Player player;
 	private static ArrayList<Zone> zones;
 	private static int worldGoldCount = 0;
-	private static int NextLevel=1;
-	private static int currentLevel=0;
+	private static int NextLevel = 1;
+	private static int currentLevel = 0;
 	private String firstLevel = "src/NewLodeLevel.txt";
 	private String secondLevel = "src/LodeLevel2.txt";
 	private String thirdLevel = "src/LodeLevel3.txt";
@@ -38,15 +40,15 @@ public class GameData {
 	public GameData() {
 		temps = new HashMap<Dimension, Integer>();
 		gameState = new GameData.BlockType[34][23];
-		player = new Player(-1,-1);
+		player = new Player(-1, -1);
 		this.file = this.firstLevel;
 		this.populateMap();
 		this.music = new Sound();
 	}
 
 	public static enum BlockType {
-		nothing(0), Brick(1), Board(2), Ladder(3), Rope(4), FinalLadder(5), Temp(6), Gold(7), GuardInTemp(
-				8), nextLevelPortal(9);
+		nothing(0), Brick(1), Board(2), Ladder(3), Rope(4), FinalLadder(5), Temp(6), Gold(7), GuardInTemp(8), nextLevelPortal(
+				9);
 
 		private int value;
 
@@ -90,6 +92,23 @@ public class GameData {
 				return false;
 			}
 		}
+
+		public String toString() {
+			switch (this) {
+			case left:
+				return "left";
+			case right:
+				return "right";
+			case up:
+				return "up";
+			case down:
+				return "down";
+			case falling:
+				return "falling";
+			default:
+				return "null direction";
+			}
+		}
 	}
 
 	public static Guard[] getGuardList() {
@@ -103,7 +122,7 @@ public class GameData {
 		System.out.println("saldkjfkajsfdlkdsaflja");
 		for (int k = 0; k < 32; k++) {
 			for (int i = 0; i < 19; i++) {
-//				System.out.print("k: " + k + "i: " + i + " ");
+				// System.out.print("k: " + k + "i: " + i + " ");
 				if (gameState[k][i] == BlockType.FinalLadder) {
 					gameState[k][i] = BlockType.Ladder;
 					System.out.println(k + " " + i);
@@ -157,6 +176,10 @@ public class GameData {
 		return temps;
 	}
 
+	public static void clearTemps() {
+		temps = new HashMap<Dimension, Integer>();
+	}
+
 	public static BlockType[][] getGameState() {
 		return gameState;
 	}
@@ -172,6 +195,7 @@ public class GameData {
 		this.errorPlayerCounter = 0;
 		zones = new ArrayList<Zone>();
 		nodes = new ArrayList<Node>();
+		clearTemps();
 		try {
 			reader = new BufferedReader(new FileReader(this.file));
 			String text;
@@ -192,12 +216,9 @@ public class GameData {
 							tempBlock = 0;
 
 							if (guardCounter >= this.numberOfGuards) {
-								ERROR_STRING = String.format(
-										"\nyo dawg, you be lying to my face,\n"
-												+ "you said there were only %d guards,\n"
-												+ "but a bunch more showed up,\n"
-												+ "don't be pulling that shit on me again brah\n",
-										this.numberOfGuards);
+								ERROR_STRING = String.format("\nyo dawg, you be lying to my face,\n"
+										+ "you said there were only %d guards,\n" + "but a bunch more showed up,\n"
+										+ "don't be pulling that shit on me again brah\n", this.numberOfGuards);
 								throw new IllegalArgumentException();
 							}
 							guardList[guardCounter] = new Guard(currentColumn, rowCount);
@@ -205,7 +226,7 @@ public class GameData {
 						} else if (tempBlock == 25) {
 							tempBlock = 0;
 							this.errorPlayerCounter++;
-							player.setAnchorPoint(currentColumn, rowCount-0.5);
+							player.setAnchorPoint(currentColumn, rowCount - 0.5);
 						} else if (tempBlock == 7) {
 							worldGoldCount++;
 						}
@@ -221,8 +242,8 @@ public class GameData {
 
 			}
 			if (this.errorPlayerCounter == 0) {
-				ERROR_STRING = String.format("yo dawg, where'd you go???\n"
-						+ "I can't see you anywhere!!!\n" + "you better get your ass down here\n"
+				ERROR_STRING = String.format("yo dawg, where'd you go???\n" + "I can't see you anywhere!!!\n"
+						+ "you better get your ass down here\n"
 						+ "before I have to have my guys get your little cracker ass");
 				throw new IllegalArgumentException();
 
@@ -238,8 +259,7 @@ public class GameData {
 
 			if (guardCounter < this.numberOfGuards) {
 				ERROR_STRING = String.format("\nyo dawg, you said there were %d guards,\n"
-						+ "but I only counted %d guards, count better brah\n", this.numberOfGuards,
-						guardCounter);
+						+ "but I only counted %d guards, count better brah\n", this.numberOfGuards, guardCounter);
 				throw new IllegalArgumentException();
 			}
 			for (Guard guard : guardList) {
@@ -271,7 +291,7 @@ public class GameData {
 	private void printNodes() {
 		for (Zone zone : zones) {
 			for (Node node : zone.nodes) {
-//				setBlock(node.x, node.y, BlockType.Gold);
+				// setBlock(node.x, node.y, BlockType.Gold);
 				System.out.println(node.toString());
 			}
 			System.out.println();
@@ -305,11 +325,11 @@ public class GameData {
 						itr.remove();
 					}
 				}
-//				for (Node node : zone.nodes) {
-//					if(node.delete) {
-//						node.down = null;
-//					}
-//				}
+				// for (Node node : zone.nodes) {
+				// if(node.delete) {
+				// node.down = null;
+				// }
+				// }
 			}
 		}
 
@@ -335,18 +355,26 @@ public class GameData {
 		return null;
 	}
 
+	public static Zone getZone(int x, int y, int id) {
+		Zone currentZone = null;
+		for (Zone zone : zones) {
+			if (zone.isInZone(x, y)) {
+				if (zone.id != id) {
+					return zone;
+				} else {
+					currentZone = zone;
+				}
+			}
+		}
+		return currentZone;
+	}
+
 	private void loadNodes() {
 		for (Zone zone : zones) {
 			if (zone.tall) {
 				checkTall(zone);
 			} else {
-				boolean boo;
-				if (zone.block == BlockType.Rope) {
-					boo = true;
-				} else {
-					boo = false;
-				}
-				checkFlat(zone, boo);
+				checkFlat(zone, zone.block == BlockType.Rope);
 			}
 		}
 	}
@@ -438,8 +466,7 @@ public class GameData {
 			while (x < 31) {
 				x++;
 				BlockType currentCell = this.getCell(x, y);
-				if (currentCell == BlockType.Board || currentCell == BlockType.Brick
-						|| currentCell == BlockType.Rope) {
+				if (currentCell == BlockType.Board || currentCell == BlockType.Brick || currentCell == BlockType.Rope) {
 					int startX = x;
 					int startY = y;
 					int length = this.checkHowLong(x, y);
@@ -536,8 +563,11 @@ public class GameData {
 	 */
 	public static boolean isXBlocked(BlockType block) {
 		if (block == BlockType.nothing || block == BlockType.Ladder || block == BlockType.Rope
-				|| block == BlockType.Temp || block == BlockType.Gold
-				|| block == BlockType.FinalLadder || block==BlockType.nextLevelPortal) { // if is nothing or
+				|| block == BlockType.Temp || block == BlockType.Gold || block == BlockType.FinalLadder
+				|| block == BlockType.nextLevelPortal) { // if
+															// is
+															// nothing
+															// or
 			return false; // ladder, or rope, return false, else return true;
 		} else {
 			return true;
@@ -557,16 +587,15 @@ public class GameData {
 		// can allow for nothing to be a valid block to not be blocked by
 		// because the game won't let you go up unless you are on a ladder
 		if (direction == GameData.Direction.up) {
-			if (block == BlockType.Ladder || block == BlockType.nothing
-					|| block == BlockType.FinalLadder || block == BlockType.nextLevelPortal) {
+			if (block == BlockType.Ladder || block == BlockType.nothing || block == BlockType.FinalLadder
+					|| block == BlockType.nextLevelPortal) {
 				return false;
 			} else {
 				return true;
 			}
 			// can go down through nothing, ladders, gold, and temps
-		} else if (block == BlockType.nothing || block == BlockType.Ladder
-				|| block == BlockType.Temp || block == BlockType.Gold
-				|| block == BlockType.nextLevelPortal) {
+		} else if (block == BlockType.nothing || block == BlockType.Ladder || block == BlockType.Temp
+				|| block == BlockType.Gold || block == BlockType.nextLevelPortal) {
 			// return false, else true
 			return false;
 		} else {
@@ -589,53 +618,50 @@ public class GameData {
 	public static Player getPlayer() {
 		return player;
 	}
-	public static void setCurrentLevel(int num)
-	{
-		
-		currentLevel=num;
+
+	public static void setCurrentLevel(int num) {
+
+		currentLevel = num;
 	}
-	public static int getCurrentLevel()
-	{
-		
+
+	public static int getCurrentLevel() {
+
 		return currentLevel;
 	}
-	public static void setNextLevel(int num)
-	{
-		
-		NextLevel=num;
+
+	public static void setNextLevel(int num) {
+
+		NextLevel = num;
 	}
-	public static int getNextLevel()
-	{
-		
+
+	public static int getNextLevel() {
+
 		return NextLevel;
 	}
-	public void regenerateLevel() {
-		currentLevel=NextLevel;
-		if(currentLevel==0 || player.isDead)
-		{
-			currentLevel=NextLevel;
-			worldGoldCount=0;
 
-			this.file=firstLevel;
+	public void regenerateLevel() {
+		currentLevel = NextLevel;
+		if (currentLevel == 0 || player.isDead) {
+			currentLevel = NextLevel;
+			worldGoldCount = 0;
+
+			this.file = firstLevel;
 			this.populateMap();
-			//currentLevel++;
-			
+			// currentLevel++;
+
 		}
-		if(currentLevel==1)
-		{
-			worldGoldCount=0;
-			this.file=secondLevel;
+		if (currentLevel == 1) {
+			worldGoldCount = 0;
+			this.file = secondLevel;
 			this.populateMap();
 			currentLevel++;
-			
-			
+
 		}
-		if(currentLevel==2)
-		{
-			worldGoldCount=0;
-			this.file=secondLevel;
+		if (currentLevel == 2) {
+			worldGoldCount = 0;
+			this.file = secondLevel;
 			this.populateMap();
-			currentLevel++;			
+			currentLevel++;
 		}
 	}
 
@@ -643,4 +669,21 @@ public class GameData {
 		return zones;
 	}
 
+	public static void reset() {
+		playerGoldCount = 0;
+	}
+
+	public static Zone getZoneUnderFallingPlayer() {
+		if (!player.isFalling()) {
+			throw new RuntimeException("player is not falling");
+		}
+		int counter = 1;
+		Zone zone = GameData.inWhatZone((int)player.anchorPoint.x, (int) (player.anchorPoint.y+counter));
+		while (zone== null) {
+			counter++;
+			zone = GameData.inWhatZone((int)player.anchorPoint.x, (int) (player.anchorPoint.y+counter));
+		}
+		
+		return zone;
+	}
 }

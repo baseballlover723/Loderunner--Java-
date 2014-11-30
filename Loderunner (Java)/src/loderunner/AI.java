@@ -15,6 +15,8 @@ public class AI {
 	private Zone zone;
 	private Zone playerZone;
 	private HashMap<ArrayList<Zone>, Integer> paths;
+	private ArrayList<Zone> smallestPath;
+	private int smallest;
 
 	public AI(Guard guard, Player player) {
 		this.guard = guard;
@@ -23,28 +25,27 @@ public class AI {
 	}
 
 	protected Direction think() {
+		// still having issues
+		// but its better
+		// guards are hopping like their on crack
 
-		this.zone = GameData.inWhatZone((int) this.guard.anchorPoint.getX(),
-				(int) this.guard.anchorPoint.getY());
+		this.zone = this.guard.currentZone;
 		if (this.zone == null) {
 			return Direction.none;
 		}
-		this.playerZone = GameData.inWhatZone((int) this.player.getAnchorPoint().getX(),
-				(int) this.player.getAnchorPoint().getY());
-		if (this.playerZone == null) {
-			if (this.guard.anchorPoint.getX() < this.player.anchorPoint.getX()) {
-				return Direction.right;
-			} else {
-				return Direction.left;
-			}
-		}
+		System.out.println("guard is in zone " + this.zone.id);
+		this.playerZone = this.player.getZone();
 		this.paths = new HashMap<ArrayList<Zone>, Integer>();
 		if (this.zone == this.playerZone) {
-			if (this.guard.anchorPoint.getX() > this.player.anchorPoint.getX()) {
-				return Direction.left;
-			}
-			if (this.guard.anchorPoint.getX() < this.player.anchorPoint.getX()) {
-				return Direction.right;
+			System.out.println("player loctaion = " + this.player.anchorPoint.toString());
+			System.out.println("guard location = " + this.guard.anchorPoint.toString());
+			if (!this.zone.tall) {
+				if (this.guard.anchorPoint.getX() > this.player.anchorPoint.getX()) {
+					return Direction.left;
+				}
+				if (this.guard.anchorPoint.getX() < this.player.anchorPoint.getX()) {
+					return Direction.right;
+				}
 			}
 			if (this.guard.anchorPoint.getY() > this.player.anchorPoint.getY()) {
 				return Direction.up;
@@ -53,8 +54,7 @@ public class AI {
 				return Direction.down;
 			}
 		}
-		Double location = new Point2D.Double(this.guard.anchorPoint.getX(),
-				this.guard.anchorPoint.getY());
+		Double location = new Point2D.Double(this.guard.anchorPoint.getX(), this.guard.anchorPoint.getY());
 
 		this.helper(location, this.zone, 0, new ArrayList<Zone>());
 		// for (Node node : this.zone.nodes) {
@@ -87,92 +87,146 @@ public class AI {
 		//
 		// }
 		// }
-		int smallest = 99999;
-		ArrayList<Zone> smallestPath = new ArrayList<Zone>();
+		this.smallest = Integer.MAX_VALUE;
+		this.smallestPath = new ArrayList<Zone>();
 		for (Entry<ArrayList<Zone>, Integer> path : this.paths.entrySet()) {
-			// System.out.printf("length = " + path.getValue() + " path = ");
+			System.out.printf("length = " + path.getValue() + " path = ");
 			for (Zone zone : path.getKey()) {
-				// System.out.printf(zone.id + " ");
+				System.out.printf(zone.id + " ");
 			}
-			// System.out.println();
-			if (path.getValue() <= smallest) {
-				smallest = path.getValue();
-				smallestPath = path.getKey();
+			System.out.println();
+			if (path.getValue() <= this.smallest) {
+				this.smallest = path.getValue();
+				this.smallestPath = path.getKey();
 			}
-		} 
-//		System.out.println("smallest value = " + smallest);
-//		System.out.println("first block to go to is: " + smallestPath.get(0).id);
-		for (Zone zone : smallestPath) {
-//			 System.out.printf(zone.id + " ");
 		}
-		// System.out.println();
-//		System.out.println("smallestPath.get(0) = " + smallestPath.get(0).id);
+		System.out.println();
+		System.out.println("smallest value = " + smallest);
+		if (smallest == Integer.MAX_VALUE) {
+			System.out.println();
+		}
+//		System.out.println("first block to go to is: " + smallestPath.get(0).id);
+		for (Zone zone : this.smallestPath) {
+			System.out.printf(zone.id + " ");
+		}
+		System.out.println();
+		System.out.println("next zone to go = " + smallestPath.get(0).id);
+		if (this.zone.id == 9) {
+			System.out.println();
+		}
 		try {
-		Direction directionToGo = directionToZone(smallestPath.get(0));
-		return directionToGo;
+			Direction directionToGo = directionToZone(this.smallestPath.get(0));
+			return directionToGo;
 		} catch (IndexOutOfBoundsException e) {
 			if (this.guard.anchorPoint.getX() < this.player.anchorPoint.getX()) {
 				return Direction.right;
 			} else {
 				return Direction.left;
 			}
-			
+
 		}
 
 	}
 
 	private Direction directionToZone(Zone zone) {
-		if (this.zone.tall) {
-			for (Node node : this.zone.nodes) {
-				if ((node.down != null && node.down.zoneToGo == zone)
-						|| (node.up != null && node.up.zoneToGo == zone)
-						|| (node.left != null && node.left.zoneToGo == zone)
-						|| (node.right != null && node.right.zoneToGo == zone)) {
-					if (node.getY() > this.guard.anchorPoint.getY()) {
-						return Direction.down;
-					} else {
-						return Direction.up;
-					}
-				}
+		for (Node node : this.zone.nodes) {
+			// TODO
+			// may need to check if inside node idk though
+			if (node.down != null && node.down.zoneToGo == zone) {
+				return directionToNode(node, Direction.down, 0, -1);
 			}
-		} else {
-			for (Node node : this.zone.nodes) {
-				if (node.down != null && node.down.zoneToGo == zone) {
-					return Direction.down;
-				}
-				if (node.up != null && node.up.zoneToGo == zone) {
-					return Direction.up;
-				}
-				if (node.left != null && node.left.zoneToGo == zone) {
-					return Direction.left;
-				}
-				if (node.right != null && node.right.zoneToGo == zone) {
-					return Direction.right;
-				}
-				// if (node.getX() > this.guard.anchorPoint.getX()) {
-				// return Direction.right;
-				// } else {
-				// return Direction.left;
-				// }
-				// }
+			if (node.up != null && node.up.zoneToGo == zone) {
+				return directionToNode(node, Direction.up, 0, 1);
+			}
+			if (node.left != null && node.left.zoneToGo == zone) {
+				return directionToNode(node, Direction.left, -1, 0);
+			}
+			if (node.right != null && node.right.zoneToGo == zone) {
+				return directionToNode(node, Direction.right, 1, 0);
 			}
 		}
-		return null;
+		// if (this.zone.tall) {
+		// for (Node node : this.zone.nodes) {
+		// if ((node.down != null && node.down.zoneToGo == zone) || (node.up !=
+		// null && node.up.zoneToGo == zone)
+		// || (node.left != null && node.left.zoneToGo == zone)
+		// || (node.right != null && node.right.zoneToGo == zone)) {
+		// if (node.getY() > this.guard.anchorPoint.getY()) {
+		// return Direction.down;
+		// } else {
+		// return Direction.up;
+		// }
+		// }
+		// }
+		// } else {
+		// for (Node node : this.zone.nodes) {
+		// // TODO
+		// // may need to check if inside node idk though
+		// if (node.down != null && node.down.zoneToGo == zone) {
+		// return Direction.down;
+		// }
+		// if (node.up != null && node.up.zoneToGo == zone) {
+		// return this.directionToNode(node);
+		// // return Direction.up;
+		// }
+		// if (node.left != null && node.left.zoneToGo == zone) {
+		// return Direction.left;
+		// }
+		// if (node.right != null && node.right.zoneToGo == zone) {
+		// return Direction.right;
+		// }
+		// // if (node.getX() > this.guard.anchorPoint.getX()) {
+		// // return Direction.right;
+		// // } else {
+		// // return Direction.left;
+		// // }
+		// // }
+		// }
+		// }
+		throw new RuntimeException("AI didn't return a direction");
 
+	}
+
+	private Direction directionToNode(Node node, Direction nodeDirection, int deltaX, int deltaY) {
+		if (node.isInside(this.guard, this.zone.tall)) {
+			// inside node
+			return nodeDirection;
+		}
+		if (this.zone.tall) {
+			if (node.getY() + deltaY > this.guard.anchorPoint.getY()) {
+				return Direction.down;
+			} else {
+				return Direction.up;
+			}
+		} else {
+			if (node.getX() + deltaX < this.guard.anchorPoint.getX()) {
+				return Direction.left;
+			} else {
+				return Direction.right;
+			}
+		}
 	}
 
 	private Point2D nodeToPoint(Node node) {
 		return new Point2D.Double(node.getX(), node.getY());
 	}
 
-	private int helper(Point2D location, Zone zone, int length, ArrayList<Zone> path) {
+	// change to queue?
+	private double helper(Point2D location, Zone zone, double length, ArrayList<Zone> path) {
+//		System.out.println(length);
 		if (zone == this.playerZone) {
+			// if (zone.id == 12 && path.size() == 1) {
+			// System.out.println();
+			// }
 			// length += (int) Math.max(Math.abs(location.getX() -
 			// this.player.anchorPoint.getX()),
-			// Math.abs(location.getY() - this.player.anchorPoint.getY()));
-			length += (int) Math.abs(location.getX() - this.player.anchorPoint.getX());
-			this.paths.put(path, length);
-			return 0;
+			if (zone.tall) {
+				length += Math.abs(location.getY() - this.player.anchorPoint.getY());
+			} else {
+				length += (int) Math.abs(location.getX() - this.player.anchorPoint.getX());
+			}
+			this.paths.put(path, (int)length);
+			return length;
 		}
 		if (path.size() > 25) {
 			return 0;
@@ -180,8 +234,7 @@ public class AI {
 		if (this.zone != null) {
 			if (!this.zone.nodes.isEmpty()) {
 				for (Node node : zone.nodes) {
-					if (node.left != null && node.left.zoneToGo.id != zone.id
-							&& !path.contains(node.left.zoneToGo)) {
+					if (node.left != null && node.left.zoneToGo.id != zone.id && !path.contains(node.left.zoneToGo)) {
 						length += distance(location, node);
 						ArrayList<Zone> newPath = clone(path);
 						newPath.add(node.left.zoneToGo);
@@ -190,8 +243,7 @@ public class AI {
 						// + node.left.fallLength, newPath);
 						this.helper(nodeToPoint(node), node.left.zoneToGo, length, newPath);
 					}
-					if (node.right != null && node.right.zoneToGo.id != zone.id
-							&& !path.contains(node.right.zoneToGo)) {
+					if (node.right != null && node.right.zoneToGo.id != zone.id && !path.contains(node.right.zoneToGo)) {
 						if (zone.id == 7) {
 							// System.out.println("7 right = " +
 							// node.right.zoneToGo.id + " length before = "+
@@ -210,16 +262,13 @@ public class AI {
 						// + node.right.fallLength, newPath);
 						this.helper(nodeToPoint(node), node.right.zoneToGo, length, newPath);
 					}
-					if (node.down != null && node.down.zoneToGo.id != zone.id
-							&& !path.contains(node.down.zoneToGo)) {
+					if (node.down != null && node.down.zoneToGo.id != zone.id && !path.contains(node.down.zoneToGo)) {
 						length += distance(location, node);
 						ArrayList<Zone> newPath = clone(path);
 						newPath.add(node.down.zoneToGo);
-						this.helper(nodeToPoint(node), node.down.zoneToGo, length
-								+ node.down.fallLength, newPath);
+						this.helper(nodeToPoint(node), node.down.zoneToGo, length + node.down.fallLength, newPath);
 					}
-					if (node.up != null && node.up.zoneToGo.id != zone.id
-							&& !path.contains(node.up.zoneToGo)) {
+					if (node.up != null && node.up.zoneToGo.id != zone.id && !path.contains(node.up.zoneToGo)) {
 						length += distance(location, node);
 						ArrayList<Zone> newPath = clone(path);
 						newPath.add(node.up.zoneToGo);
@@ -231,9 +280,8 @@ public class AI {
 		return 0;
 	}
 
-	private int distance(Point2D location, Node node2) {
-		return (int) Math.max(Math.abs(location.getX() - node2.getX()),
-				Math.abs(location.getY() - node2.getY()));
+	private double distance(Point2D location, Node node2) {
+		return Math.max(Math.abs(location.getX() - node2.getX()+0.5), Math.abs(location.getY() - node2.getY()+0.5));
 	}
 
 	private ArrayList<Zone> clone(ArrayList<Zone> path) {

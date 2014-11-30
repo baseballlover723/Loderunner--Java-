@@ -30,7 +30,8 @@ public class Main {
 	private static Player player;
 	private static JFrame frame;
 	private static boolean paused;
-	private static final int FRAME_RATE = 30;
+	private static final int FRAME_RATE = 30
+			;
 	private static final int DELAY_MS = 1000 / FRAME_RATE;
 	private static final int COUNTER_LIMIT = 5 * FRAME_RATE;
 	private static GameData gameData;
@@ -61,7 +62,7 @@ public class Main {
 		frame.setAlwaysOnTop(true);
 		frame.setVisible(true);
 		gameData = new GameData();
-//		startPage = new StartPage(frame);
+		// startPage = new StartPage(frame);
 		// deathScreen = new DeathScreen(frame);
 		lodeWorld = new LodeWorld(frame);
 
@@ -128,18 +129,18 @@ public class Main {
 					paused = !paused;
 					gameData.setNextLevel(GameData.getCurrentLevel() + 1);
 					gameData.regenerateLevel();
-					levelWon = false;	
+					levelWon = false;
 					paused = !paused;
 					break;
-					// only can go up level then down and then back up
+				// only can go up level then down and then back up
 				case KeyEvent.VK_PAGE_DOWN:
 					paused = !paused;
 					gameData.setNextLevel(0);
 					gameData.regenerateLevel();
-					levelWon = false;	
+					levelWon = false;
 					paused = !paused;
 					break;
-					
+
 				default:
 					direction = GameData.Direction.none;
 				}
@@ -176,29 +177,41 @@ public class Main {
 		long end;
 		Iterator<Entry<Dimension, Integer>> itr;
 		while (true) {
-//			System.out.println(levelWon);
+			// System.out.println(levelWon);
 			if (player.onFinalLadder()) {
 				GameData.setNextLevel(GameData.getCurrentLevel() + 1);
 				gameData.regenerateLevel();
 				levelWon = false;
 			}
 			// magical print statment, pause feature doesn't work without it
-			System.out.println();
 			if (!paused) {
-				if (player.isDead) {
-					System.out.println("DEAD");
-//					GameData.setNextLevel(GameData.getCurrentLevel());
-//					gameData.regenerateLevel();
-					break;
-				}
-//				System.out.println("Player Gold: " + GameData.getPlayerGold() + " World Gold: "
-//						+ GameData.getWorldGold() + "levelwon = "+ levelWon);
+				System.out.println();
+			}
+			if (!paused) {
+				// System.out.println("gold remaining on level = " +
+				// GameData.getWorldGold());
+				// System.out.println("gold held by the player = " +
+				// GameData.getPlayerGold());
+				// System.out.println("Player Gold: " + GameData.getPlayerGold()
+				// + " World Gold: "
+				// + GameData.getWorldGold() + "levelwon = "+ levelWon);
 				if (GameData.getPlayerGold() >= GameData.getWorldGold() && !levelWon) {
 					GameData.setWin();
-//					System.out.println("Win");
+					// System.out.println("Win");
 					levelWon = true;
 				}
-
+				player.update();
+				if (player.isFalling()) {
+					player.fall();
+				}
+				if (player.isDead) {
+					System.out.println("DEAD");
+					player.isDead= false;
+					// GameData.setNextLevel(GameData.getCurrentLevel());
+					// gameData.regenerateLevel();
+					continue;
+				}
+				System.out.println(player.anchorPoint);
 				start = System.nanoTime();
 				// System.out.println("*");
 				for (Guard guard : GameData.getGuardList()) {
@@ -208,22 +221,23 @@ public class Main {
 					} else {
 						long startTime = System.nanoTime();
 						Direction direction = guard.AI.think();
+						System.out.println("took " + (System.nanoTime() - startTime)/1_000_000.0 + " MS");
+						System.out.println("Guard with go " + direction.toString());
 						if (direction == Direction.none) {
 							direction = guard.getLastMove();
 						}
 						guard.setLastMove(direction);
-//						System.out.println("Direction to go is " + direction);
+						// System.out.println("Direction to go is " +
+						// direction);
 						guard.move(direction);
-//						System.out.println("Guard box = " + guard.boundingRectangle.toString());
+						// System.out.println("Guard box = " +
+						// guard.boundingRectangle.toString());
 					}
 
 				}
-				player.update();
-				if (player.isFalling()) {
-					player.fall();
-				}
-//				System.out.println("player box = " + player.boundingRectangle.toString());
-//				System.out.println();
+				// System.out.println("player box = " +
+				// player.boundingRectangle.toString());
+				// System.out.println();
 
 				// lodeWorld.repaint();
 				frame.repaint();
@@ -255,57 +269,58 @@ public class Main {
 				}
 			}
 		}
-		int score = GameData.getScore();
-		highScores.addScore(score);
-		String s1 = new String();
-		String s2 = new String();
-		String s3 = new String();
-		int place = highScoreList.indexOf(score) + 1;
-		double percentile = place / (double) highScoreList.size();
-		System.out.println();
-		for (int k = 0; k < highScoreList.size(); k++) {
-			System.out.printf("%d: %d\n", k + 1, highScoreList.get(k));
-		}
-		System.out.printf("You got %d points!\n", score);
-		s1 = ("You scored:" + score);
-		System.out.printf("Thats good for %dth place\n", place);
-		s2 = (" and placed:" + place);
-		System.out.printf("Congratulations!!! ");
-		s3 = (" Congratulations!!! ");
-		if (place == 1) {
-			score1 = "You have the high score";
-			score2 = "You be winner!!!";
-		} else if (score == 0) {
-			score1 = "You are a complete failure at this game";
-
-		} else if (place == 2) {
-			score1 = "You got second place!!!";
-
-		} else if (place == 3) {
-			score1 = "You got Third place!!!";
-
-		} else if (percentile < .1) {
-			score1 = "You placed in the top 10%!!!";
-		} else if (percentile < .25) {
-			score1 = "You placed in the top 25%!";
-		} else if (percentile < 0.5) {
-			score1 = "You placed in the top 50%";
-			score2 = "Hey, at least you don't suck at this game";
-		} else if (percentile <= 0.9) {
-			score1 = "You've unlocked \"Learning How To NOT Suck!\"";
-		} else {
-			score1 = "You are a complete failure at this game";
-		}
-		if (score == 0) {
-			score3 = "brah, can you even...";
-		}
+		// reset();
+		// int score = GameData.getScore();
+		// highScores.addScore(score);
+		// String s1 = new String();
+		// String s2 = new String();
+		// String s3 = new String();
+		// int place = highScoreList.indexOf(score) + 1;
+		// double percentile = place / (double) highScoreList.size();
+		// System.out.println();
+		// for (int k = 0; k < highScoreList.size(); k++) {
+		// System.out.printf("%d: %d\n", k + 1, highScoreList.get(k));
+		// }
+		// System.out.printf("You got %d points!\n", score);
+		// s1 = ("You scored:" + score);
+		// System.out.printf("Thats good for %dth place\n", place);
+		// s2 = (" and placed:" + place);
+		// System.out.printf("Congratulations!!! ");
+		// s3 = (" Congratulations!!! ");
+		// if (place == 1) {
+		// score1 = "You have the high score";
+		// score2 = "You be winner!!!";
+		// } else if (score == 0) {
+		// score1 = "You are a complete failure at this game";
+		//
+		// } else if (place == 2) {
+		// score1 = "You got second place!!!";
+		//
+		// } else if (place == 3) {
+		// score1 = "You got Third place!!!";
+		//
+		// } else if (percentile < .1) {
+		// score1 = "You placed in the top 10%!!!";
+		// } else if (percentile < .25) {
+		// score1 = "You placed in the top 25%!";
+		// } else if (percentile < 0.5) {
+		// score1 = "You placed in the top 50%";
+		// score2 = "Hey, at least you don't suck at this game";
+		// } else if (percentile <= 0.9) {
+		// score1 = "You've unlocked \"Learning How To NOT Suck!\"";
+		// } else {
+		// score1 = "You are a complete failure at this game";
+		// }
+		// if (score == 0) {
+		// score3 = "brah, can you even...";
+		// }
 	}
 
 	public static void reset() {
 
 		// JOptionPane.showMessageDialog(frame, "you died, well this sucks");
 		// gameData.setLevelCount(gameData.getLevelCount());
-
+		GameData.reset();
 		HighScores highScores = new HighScores(frame);
 		ArrayList<Integer> highScoreList = highScores.load();
 		int score = GameData.getScore();

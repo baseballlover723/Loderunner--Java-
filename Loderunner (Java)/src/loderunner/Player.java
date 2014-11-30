@@ -36,7 +36,7 @@ public class Player extends SuperCharacter {
 	private boolean isFalling;
 	private boolean onRope;
 	private Sound music;
-
+	private Zone zone;
 
 	// TODO make sure it can support resizing
 	// TODO needs a resize method that resizes everything with pixel width and
@@ -68,7 +68,7 @@ public class Player extends SuperCharacter {
 		this.outlineColor = Color.BLACK;
 		this.color = Color.ORANGE;
 		this.music = new Sound();
-		
+
 		// super.update();
 	}
 
@@ -86,8 +86,7 @@ public class Player extends SuperCharacter {
 
 		// body done
 		g2d.translate(0, -cellPixelHeight / 4);
-		Rectangle2D body = new Rectangle2D.Double(-this.bodyWidth / 2, 0, this.bodyWidth,
-				this.bodyLength);
+		Rectangle2D body = new Rectangle2D.Double(-this.bodyWidth / 2, 0, this.bodyWidth, this.bodyLength);
 		g2d.setColor(this.outlineColor);
 		g2d.setStroke(new BasicStroke(2));
 		g2d.draw(body);
@@ -102,8 +101,7 @@ public class Player extends SuperCharacter {
 			g2d.setColor(this.outlineColor);
 
 			g2d.rotate(-k * this.legAngle);
-			Rectangle2D leg = new Rectangle2D.Double(0, -cellPixelHeight / 40, this.legLength,
-					cellPixelHeight / 20);
+			Rectangle2D leg = new Rectangle2D.Double(0, -cellPixelHeight / 40, this.legLength, cellPixelHeight / 20);
 			g2d.draw(leg);
 			g2d.setColor(this.color);
 			g2d.fill(leg);
@@ -127,8 +125,7 @@ public class Player extends SuperCharacter {
 		}
 
 		g2d.translate(this.bodyWidth / 2, 0);
-		Rectangle2D arm = new Rectangle2D.Double(0, -cellPixelWidth / 60, (this.armLength),
-				cellPixelHeight / 30);
+		Rectangle2D arm = new Rectangle2D.Double(0, -cellPixelWidth / 60, (this.armLength), cellPixelHeight / 30);
 		g2d.rotate(this.armAngle);
 		g2d.setColor(this.outlineColor);
 		g2d.draw(arm);
@@ -150,10 +147,8 @@ public class Player extends SuperCharacter {
 			g2d.rotate(-Math.PI);
 		}
 
-		g2d.translate(this.bodyWidth, this.ANCHOR_POINT_TO_ARM_DISTANCE_MULTIPLIER
-				* cellPixelHeight);
-		g2d.translate(-this.anchorPoint.getX() * cellPixelWidth, -this.anchorPoint.getY()
-				* cellPixelHeight);
+		g2d.translate(this.bodyWidth, this.ANCHOR_POINT_TO_ARM_DISTANCE_MULTIPLIER * cellPixelHeight);
+		g2d.translate(-this.anchorPoint.getX() * cellPixelWidth, -this.anchorPoint.getY() * cellPixelHeight);
 
 		// g2d.rotate(-((180 + (26.6 * 2)) * Math.PI) / 180);
 		// g2d.translate(0, ((this.bodyLength *
@@ -168,29 +163,29 @@ public class Player extends SuperCharacter {
 	// public void dig();
 
 	private void updateValues(double pixelWidth, double pixelHeight) {
-//		Zone zone = GameData.inWhatZone((int) this.anchorPoint.getX(),
-//				(int) this.anchorPoint.getY());
-////		System.out.println(zone.id);
-//		if (zone != null) {
-//			for (Node node : zone.nodes) {
-//				if (node.x == (int) this.anchorPoint.getX()
-//						&& node.y == (int) this.anchorPoint.getY()) {
-//					if (node.down != null) {
-//						System.out.println(node.down.direction);
-//					}	
-//					if (node.up != null) {
-//						System.out.println(node.up.direction);
-//					}	
-//					if (node.right != null) {
-//						System.out.println(node.right.direction);
-//					}
-//					if (node.left != null) {
-//						System.out.println(node.left.direction);
-//					}	
-//					System.out.println();
-//				}
-//			}
-//		}
+		// Zone zone = GameData.inWhatZone((int) this.anchorPoint.getX(),
+		// (int) this.anchorPoint.getY());
+		// // System.out.println(zone.id);
+		// if (zone != null) {
+		// for (Node node : zone.nodes) {
+		// if (node.x == (int) this.anchorPoint.getX()
+		// && node.y == (int) this.anchorPoint.getY()) {
+		// if (node.down != null) {
+		// System.out.println(node.down.direction);
+		// }
+		// if (node.up != null) {
+		// System.out.println(node.up.direction);
+		// }
+		// if (node.right != null) {
+		// System.out.println(node.right.direction);
+		// }
+		// if (node.left != null) {
+		// System.out.println(node.left.direction);
+		// }
+		// System.out.println();
+		// }
+		// }
+		// }
 		this.bodyWidth = pixelWidth / 20;
 		this.bodyLength = pixelHeight * .375 * this.yProportion;
 		this.XHeadRad = pixelWidth * .3 * this.xProportion;// .075;//.125;
@@ -203,6 +198,32 @@ public class Player extends SuperCharacter {
 		this.armLength = Math.sqrt(x * x + 4 * y * y) / 8;
 		this.isFalling = this.isFalling();
 		this.onRope = this.onRope();
+	}
+	
+	@Override
+	protected void updateZone() {
+		this.zone = GameData.inWhatZone((int) this.anchorPoint.getX(), (int) this.anchorPoint.getY());
+		if (this.zone != null) {
+			System.out.println("player is in zone " + this.zone.id);
+		}
+		if (this.zone == null) {
+			// try left side
+			this.zone = GameData.inWhatZone((int) this.xL, (int) this.getAnchorPoint().getY());
+			if (this.zone == null) {
+				// still null, try the right side
+				this.zone = GameData.inWhatZone((int) this.xR, (int) this.getAnchorPoint().getY());
+				if (this.zone == null) {
+					// still null, player is falling
+					this.zone = GameData.getZoneUnderFallingPlayer();
+					// if (this.guard.anchorPoint.getX() <
+					// this.anchorPoint.getX()) {
+					// return Direction.right;
+					// } else {
+					// return Direction.left;
+					// }
+				}
+			}
+		}
 
 	}
 
@@ -251,7 +272,7 @@ public class Player extends SuperCharacter {
 		GameData.increment();
 		System.out.println("score = " + GameData.getScore());
 		music.startGold();
-	
+
 	}
 
 	@Override
@@ -259,7 +280,13 @@ public class Player extends SuperCharacter {
 		this.isDead = true;
 		music.startDie();
 		Main.reset();
-		this.isDead=false;
 	}
-
+	
+	/**
+	 * returns the zone the player is in, or if the player is falling, the zone he will land on
+	 * @return
+	 */
+	public Zone getZone() {
+		return this.zone;
+	}
 }
